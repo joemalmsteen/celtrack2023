@@ -46,7 +46,7 @@
                                                     <p class="mb-0 mr-2">Don't have an account?</p>
                                                     <a  class="btn btn-outline-danger" href="regStaff.php">Create new</a>
                                                 </div>
-                                                <p class="mt-5 mb-3 text-muted text-center">&copy; 2024</p>
+                                                <p class="mt-5 mb-3 text-muted text-center">&copy; 2023</p>
                                         </form>
                                     </div>
                                 </div>

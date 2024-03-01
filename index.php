@@ -34,7 +34,7 @@
         <button class="btn btn-lg btn-primary btn-block" type="submit" name="submit">Sign in</button>
         <a class="btn btn-lg btn-outline-primary btn-block" href="regpart.php">Register</a>
         <a class="btn btn-sm btn-link btn-block" style="" href="staff/login.php" target="_blank">Admin Site</a>
-        <p class="mt-5 mb-3 text-muted text-center">&copy; 2024</p>
+        <p class="mt-5 mb-3 text-muted text-center">&copy; 2023</p>
     </form>
 
 
