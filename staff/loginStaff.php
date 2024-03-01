@@ -1,7 +1,8 @@
- <?php
-
+<?php
+// Ensure no output is sent before session_start()
 session_start(); 
 include "../dbconn.php";
+
 if (isset($_POST['email']) && isset($_POST['password'])) {
     function validate($data){
        $data = trim($data);
@@ -24,23 +25,22 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
         if (mysqli_num_rows($result) === 1) {
             $row = mysqli_fetch_assoc($result);
             if ($row['email'] === $email && $row['nric'] === $pass) {
-                //echo "Logged in!";
                 $_SESSION['email'] = $row['email'];
                 $_SESSION['fullname'] = $row['fullname'];
                 $_SESSION['sid'] = $row['sid'];
                 header("location: dashboard.php?sid=".$row['sid']);
                 exit();
             }else{
-                header("Location: login.php?error=Incorect User name or password");
+                header("Location: login.php?error=Incorrect User name or password");
                 exit();
             }
         }else{
-            header("Location: login.php?error=Incorect User name or password");
+            header("Location: login.php?error=Incorrect User name or password");
             exit();
         }
     }
 }else{
-    header("Location: login.php?=wadaheck");
+    header("Location: login.php?error=wadaheck");
     exit();
 }
 ?>
