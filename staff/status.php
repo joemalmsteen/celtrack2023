@@ -1,10 +1,10 @@
 <?php
 session_start();
-include "../dbconn.php";
+include("../dbconn.php");
 
 $sid = $_GET['sid'];
 
-$sql = "SELECT * FROM staff WHERE sid = $sid";
+$sql = "SELECT * FROM admin WHERE sid = $sid";
 $result = mysqli_query($conn, $sql);
 $row = mysqli_fetch_array($result);
 
@@ -24,92 +24,89 @@ $row = mysqli_fetch_array($result);
 
     <!-- Custom styles for this template -->
     <link href="styles/dashboard.css" rel="stylesheet">
-    <title>CLUMS::Staff</title>
+    <title>Participants' Post</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow navbar-expand-lg">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">Community Linkages Unit</a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown">
-                <!-- <a class="nav-link" href="#"><i class="bi bi-person-circle"></i>Sign out</a> -->
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle"></i>
-                </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#">Profile</a>
-                    <a class="dropdown-item" href="#">Add User</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-danger" href="#">Sign Out</a>
+
+    <div class="sidebar d-flex flex-column justify-content-between">
+            <div class="top"> 
+                <div class="logo">
+                    <span>Community Linkages</span>
                 </div>
+                <i class="bi bi-list" id="btn"></i>
+            </div>
+            <div class="user">
+                <img class="icon mb-2" src="icon.png" alt="">
+                <div>
+                    <p class="bold h4">WELCOME, </p>
+                    <p><?php echo $row['fullname']; ?></p>
+                </div>
+            </div>
+            <ul>
+                <li>
+                    <a href="dashboard.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                        <i class="bi bi-front"></i>
+                        <span class="nav-item h6">Dashboard</span>
+                    </a>
+                    
+                </li>
+                <li>
+                    <a href="program.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                        <i class="bi bi-list-check"></i>
+                        <span class="nav-item h6">List Of Program</span>
+                    </a>
+                    
+                </li>
+                <li>
+                    <a href="status.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                        <i class="bi bi-chat-left-text"></i>
+                        <span class="nav-item h6">Participant's post</span>
+                    </a>
+                    
+                </li>
+            </ul>
+            <ul class="mt-auto">
+            <li>
+                <a href="logout.php" style="color: red;">
+                    <i class="bi bi-box-arrow-in-right"></i>
+                    <span class="nav-item">Log Out</span>
+                </a>
+                
             </li>
         </ul>
-    </nav>
+    </div>
 
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="sidebar-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="home"></span> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="program.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="database"></span> Program List
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="javascript:window.location.reload(true)">
-                                <span data-feather="framer"></span> Participant's Status <span class="sr-only">(current)</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link disabled" href="#">
-                                <span data-feather="save"></span> Miscellaneous
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
 
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Participant's Status</h1>
-                </div>
 
-                <!-- participant status list -->
-                <?php
-                $sqlstatus = "SELECT * FROM status AS s JOIN participant AS p ON s.pid = p.pid ORDER BY s.time desc";
-                $restat = mysqli_query($conn, $sqlstatus) or die("error".mysqli_error($conn));
-                while($statrow = mysqli_fetch_assoc($restat)) {
-                    $div = ' class="mx-auto pt-2 col-md-7"';
-                        $card = ' class="card mb-4"';
-                        $body = ' class="card-body"';
-                        $text = ' class="card-text"';
-                        $footer = ' class="card-footer"';
-                        $mute = ' class="text-muted"';
-                        echo "<div".$div.">";
-                        echo "<div".$card.">";
-                        echo "<div".$body.">";
-                        echo "<h4".$text.">".$statrow['fullname']."</h4>";
-                        echo "<p".$text.">".$statrow['feed']."</p>";
-                        echo "</div>";
-                        echo "<div".$footer.">";
-                        echo "<small".$mute.">".$statrow['time']."</small>";
-                        echo "</div>";
-                        echo "</div>";
-                        echo "</div>";
-                    }
-                ?>
-            </main>
+    <div class="main-content">
+        <div class="container-fluid d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-0 pb-2 mb-3 border-bottom">
+            <h1>PARTICIPANTS' POSTS</h1>
         </div>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-12 px-md-4">
+            <div class="container-fluid">
+                <!-- Cards to show participant statuses -->
+                <div class="row">
+                    <?php
+                        $sqlstatus = "SELECT * FROM status AS s JOIN participant AS p ON s.pid = p.pid ORDER BY s.time desc";
+                        $restat = mysqli_query($conn, $sqlstatus) or die("error".mysqli_error($conn));
+                        while($statrow = mysqli_fetch_assoc($restat)) {
+                            echo '<div class="col-md-4 mb-4">';
+                            echo '<div class="card">';
+                            echo '<div class="card-body">';
+                            echo '<h4 class="card-title">'.$statrow['fullname'].'</h4>';
+                            echo '<p class="card-text">'.$statrow['feed'].'</p>';
+                            echo '</div>';
+                            echo '<div class="card-footer">';
+                            echo '<small class="text-muted">'.$statrow['time'].'</small>';
+                            echo '</div>';
+                            echo '</div>';
+                            echo '</div>';
+                        }
+                    ?>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- jQuery and Bootstrap Bundle (includes Popper) -->
@@ -121,4 +118,15 @@ $row = mysqli_fetch_array($result);
     <script src="script/dashboard.js"></script>
 </body>
 
+<script>
+    let btn= document.querySelector('#btn')
+    let sidebar = document.querySelector('.sidebar')
+
+    btn.onclick = function (){
+        sidebar.classList.toggle('active');
+    };
+</script>
+
+
 </html>
+

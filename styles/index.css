@@ -1,8 +1,8 @@
 html,
 body {
-    height: 100%;
+    height: auto;
+   
 }
-
 
 body {
     display: -ms-flexbox;
@@ -11,14 +11,18 @@ body {
     align-items: center;
     padding-top: 40px;
     padding-bottom: 40px;
-    background-color:linear-gradient(to bottom right, #2c3e50, #000000)
+    background:linear-gradient(to bottom right, #2c3e50, #000000);
+
 }
+
+
 
 .form-signin {
     width: 100%;
     max-width: 420px;
     padding: 15px;
     margin: auto;
+    color: rgb(248, 241, 241);
 }
 
 .form-label-group {
@@ -28,7 +32,7 @@ body {
 
 .form-label-group input,
 .form-label-group label {
-    height: 3.125rem;
+    height: 3.0rem;
     padding: .75rem;
 }
 

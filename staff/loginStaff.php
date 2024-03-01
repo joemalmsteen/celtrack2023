@@ -19,7 +19,7 @@ if (isset($_POST['email']) && isset($_POST['password'])) {
         header("Location: index.php?error=Password is required");
         exit();
     }else{
-        $sql = "SELECT * FROM staff WHERE email='$email' AND nric='$pass'";
+        $sql = "SELECT * FROM admin WHERE email='$email' AND nric='$pass'";
         $result = mysqli_query($conn, $sql);
         if (mysqli_num_rows($result) === 1) {
             $row = mysqli_fetch_assoc($result);

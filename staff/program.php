@@ -2,17 +2,26 @@
 session_start();
 include("../dbconn.php");
 
-$sid = $_GET['sid'];
 
-$sql = "SELECT * FROM staff WHERE sid='$sid'";
+// Check if 'sid' is not set in the session
+if (!isset($_SESSION['sid'])) {
+    // Redirect to login page or display an error message
+    header("Location: login.php");
+    exit();
+}
+$sid = $_SESSION['sid'];
 
+$sql = "SELECT * FROM admin WHERE sid='$sid'";
 $result = mysqli_query($conn, $sql);
 $row = mysqli_fetch_array($result);
 
 //program list
-$sqlProg = "SELECT * FROM program ORDER BY date DESC";
+$sqlProg = "SELECT * FROM program ORDER BY start_date DESC";
 $resultProg = mysqli_query($conn, $sqlProg);
-//$rowProg = mysqli_fetch_array($resultProg);
+if (!$resultProg) {
+    die('Error fetching program list: ' . mysqli_error($conn));
+}
+
 
 $sqlStat = "SELECT * FROM status";
 if ($resultStat = mysqli_query($conn, $sqlStat)) {
@@ -20,6 +29,12 @@ if ($resultStat = mysqli_query($conn, $sqlStat)) {
     $countStat = mysqli_num_rows($resultStat);
 }
 
+
+// Function to format date in alphabets
+function formatDate($dateTimeString) {
+    $timestamp = strtotime($dateTimeString);
+    return date("j F Y h:i A", $timestamp); // Format: Month Day, Year Hour:Minute AM/PM
+}
 
 ?>
 <!doctype html>
@@ -34,128 +49,132 @@ if ($resultStat = mysqli_query($conn, $sqlStat)) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css" integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.2/font/bootstrap-icons.css">
 
+    <!-- Confirm message for deletion -->
+    <script>
+        function confirmDelete() {
+            return confirm("Are you sure you want to cancel this program?");
+        }
+    </script>
+
     <!-- Custom styles for this template -->
     <link href="styles/dashboard.css" rel="stylesheet">
-    <title>CLUMS::Staff</title>
+
+    <title>List Of Program</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow navbar-expand-lg">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">Community Linkages Unit</a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown">
-                <!-- <a class="nav-link" href="#"><i class="bi bi-person-circle"></i>Sign out</a> -->
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle"></i>
+<div class="sidebar d-flex flex-column justify-content-between">
+        <div class="top"> 
+            <div class="logo">
+                <span>Community Linkages</span>
+            </div>
+            <i class="bi bi-list" id="btn"></i>
+        </div>
+        <div class="user">
+            <img class="icon mb-2" src="icon.png" alt="">
+            <div>
+                <p class="bold h4">WELCOME, </p>
+                <p><?php echo $row['fullname']; ?></p>
+            </div>
+        </div>
+        <ul>
+            <li>
+                <a href="dashboard.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-front"></i>
+                    <span class="nav-item h6">Dashboard</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#">Profile</a>
-                    <a class="dropdown-item" href="#">Add User</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-danger" href="#">Sign Out</a>
-                </div>
+            </li>
+            <li>
+                <a href="program.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-list-check"></i>
+                    <span class="nav-item h6">List Of Program</span>
+                </a>
+            </li>
+            <li>
+                <a href="status.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span class="nav-item h6">Participant's post</span>
+                </a>
             </li>
         </ul>
-    </nav>
+        <ul class="mt-auto">
+        <li>
+            <a href="logout.php" style="color: red;">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span class="nav-item">Log Out</span>
+            </a>
+        </li>
+    </ul>
+    </div>
 
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="sidebar-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="dashboard.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="home"></span> Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="javascript:window.location.reload(true)">
-                                <span data-feather="database"></span> Program List <span class="sr-only">(current)</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="status.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="framer"></span> Participant's Status
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link disabled" href="#">
-                                <span data-feather="save"></span> Miscellaneous
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Program List</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
+    <div class="main-content">
+        <div class="container-fluid d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-0 pb-2 mb-3 border-bottom">
+            <h1>LIST OF PROGRAM</h1>
+            <div class="btn-toolbar mb-2 mb-md-0">
                         <div class="btn-group mr-2">
                             <button class="btn btn-outline-secondary" data-toggle="modal" data-target="#addnew"><i class="bi bi-calendar2-plus"></i> New Program</button>
                         </div>
-                    </div>
-                </div>
+            </div>
+        </div>
+
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-12 px-md-5">
+
+            <!-- table for program list -->
+            <div class="mx-auto pt-4">
+                <!-- search bar to search program -->
+                <!--<input class="form-control form-control-lg mb-4" type="text" placeholder="Search by code or program name"> -->
 
                 <!-- table for program list -->
-                <div class="mx-auto pt-4">
-                    <!-- search bar to search program -->
-                    <input class="form-control form-control-lg mb-4" type="text" placeholder="Search by code or program name">
+                <table class="table table-bordered rounded-table">
+                    <thead class="thead-dark ">
+                        <tr>
+                            <th style="text-align: center">CODE</th>
+                            <th style="text-align: center">PROGRAM</th>
+                            <th style="text-align: center">START DATE</th>
+                            <th style="text-align: center">END DATE</th>
+                            <th style="text-align: center">LOCATION </th>
+                            <th style="text-align: center">ACTIVITY MANAGER </th>
+                            <th style="text-align: center">ACTION </th>
+                            
+                        </tr>
+                    </thead>
+                    <tbody>
+                            <?php
+                                while($rowProg = mysqli_fetch_array($resultProg)) {
+                                    $text = ' style="text-align: center""';
+                                    echo "<tr>";
+                                    echo "<td".$text.">".$rowProg['progID']."</td>";
+                                    echo "<td><a href='progInfo.php?progID=".$rowProg['progID']."'>".$rowProg['progName']."</td>";
+                                    echo "<td".$text.">".formatDate($rowProg['start_date'])."</td>";
+                                    echo "<td".$text.">".formatDate($rowProg['end_date'])."</td>";
+                                    echo "<td".$text.">".$rowProg['location']."</td>";
+                                    echo "<td".$text.">".$rowProg['manager']."</td>";
+                              
 
-                    <!-- table for program list -->
-                    <table class="table table-bordered">
-                        <thead class="thead-dark">
-                            <tr>
-                                <th style="text-align: center">CODE</th>
-                                <th style="text-align: center">PROGRAM NAME</th>
-                                <th style="text-align: center">START DATE</th>
-                                <th style="text-align: center">LOCATION</th>
-                                <th style="text-align: center">ACTION </th>
-                                <!-- <th>PPROGRAM INFO</th>
-                                <th>PARTICIPANT LIST</th>
-                                <th>PROGRAM FEEDBACK</th> -->
-                            </tr>
-                        </thead>
-                        <tbody>
-                                <?php
-                                    while($rowProg = mysqli_fetch_array($resultProg)) {
-                                        $text = ' style="text-align: center""';
-                                        echo "<tr>";
-                                        echo "<td".$text.">".$rowProg['code']."</td>";
-                                        echo "<td>".$rowProg['name']."</td>";
-                                        echo "<td".$text.">".$rowProg['date']."</td>";
-                                        echo "<td".$text.">".$rowProg['location']."</td>";
-                                        echo "<td></td>";
-                                        echo "</tr>";
-                                    }
-                                ?>
-                                <!--
-                                <td style="text-align: center">CLU010</td>
-                                <td>Program ICT Warriors Komuniti Belia Sri Aman</td>
-                                <td style="text-align: center">24/11/2022</td>
-                                <td style="text-align: center">22</td>
-                                <td style="text-align: center">
-                                    <a type="button" class="btn btn-info" href="program/info.html" data-toggle="tooltip" data-placement="top" title="Program Info"><i class="bi bi-info-circle"></i></a>
-                                    <a type="button" class="btn btn-primary" href="program/participant.html" data-toggle="tooltip" data-placement="top" title="Participants Info"><i class="bi bi-person-lines-fill"></i></a>
-                                    <a type="button" class="btn btn-success" href="" data-toggle="tooltip" data-placement="top" title="Program Feedback"><i class="bi bi-clipboard-data"></i></a>
-                                </td>
-                                -->
-                        </tbody>
-                    </table>
-                </div>
-            </main>
-        </div>
+                                                // Add the delete button
+                                            echo "<td>";
+                                            echo "<form action='deletion.php' method='post'>";
+                                            echo "<input type='hidden' name='count' value='" . $rowProg['count'] . "' />";
+                                            echo "<input type='hidden' name='progID' value='" . $rowProg['progID'] . "' />";
+                                            echo "<button type='submit' class='btn btn-danger' onclick='return confirmDelete()'>Cancel</button>";
+                                            echo "</form>";
+                                            echo "</td>";
+                                    echo "</tr>";
+                                }
+                            ?>
+                    </tbody>
+                </table>
+            </div>
+        </main>
     </div>
+
+
 
     <!-- Modal -->
     <div class="modal fade" id="addnew" data-backdrop="static" data-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <form>
+                <form action="upload.php" method="post">
                     <div class="modal-header">
                         <h5 class="modal-title" id="staticBackdropLabel">Create New Program</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -165,45 +184,47 @@ if ($resultStat = mysqli_query($conn, $sqlStat)) {
                     <div class="modal-body">
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <!-- <label for="inputEmail4">Program Code</label>
-                                <input type="text" class="form-control" id="inputEmail4"> -->
-                                <label for="inputProg">Program Code</label>
+
+                                <label for="progID">Program Code</label>
                                 <div class="input-group">
                                     <div class="input-group-prepend">
-                                        <span class="input-group-text" id="inputProg">CLU</span>
+                                        <span class="input-group-text">CLU</span>
                                     </div>
-                                    <input type="text" class="form-control" placeholder="1234" aria-label="1234" aria-describedby="basic-addon1" maxlength="4">
+                                    <input type="text" class="form-control" id="progID" name="progID" aria-label="1234" aria-describedby="basic-addon1" maxlength="4" required autofocus>
                                 </div>
                             </div>
+                        </div>
+                        <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label for="inputPassword4">Pin</label>
-                                <input type="text" class="form-control" id="inputPassword4">
+                                <label for="progName">Program Name</label>
+                                <input type="text" class="form-control" id="progName" name="progName" required autofocus>
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label for="start_date">Start Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="start_date" name="start_date">
                             </div>
                         </div>
                         <div class="form-row">
                             <div class="form-group col-md-6">
-                                <label for="inputEmail4">Program Name</label>
-                                <input type="text" class="form-control" id="inputEmail4">
+                                <label for="end_date">End Date & Time</label>
+                                <input type="datetime-local" class="form-control" id="end_date" name="end_date">
                             </div>
                             <div class="form-group col-md-6">
-                                <label for="inputPassword4">Start Date</label>
-                                <input type="date" class="form-control" id="inputPassword4">
+                                <label for="location">Program Location</label>
+                                <input type="text" class="form-control" id="location" name="location" required autofocus>
                             </div>
                         </div>
-                        <div class="form-row">
+                        <div class="form-row">                            
                             <div class="form-group col-md-6">
-                                <label for="inputEmail4">Program Location</label>
-                                <input type="text" class="form-control" id="inputEmail4">
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="inputPassword4">Expected Number of Participants</label>
-                                <input type="number" class="form-control" id="inputPassword4">
+                                <label for="manager">Activity Manager</label>
+                                <input type="text" class="form-control" id="manager" name="manager" required autofocus>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
-                        <button type="button" class="btn btn-primary" type="submit">Add Program</button>
+                        <input type="hidden" name="sid" value="<?php echo $row['sid']; ?>">
+                        <button class="btn btn-primary" type="submit" name="submit">Add Program</button>
                     </div>
                 </form>
             </div>
@@ -218,5 +239,15 @@ if ($resultStat = mysqli_query($conn, $sqlStat)) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
     <script src="script/dashboard.js"></script>
 </body>
+
+<script>
+    let btn= document.querySelector('#btn')
+    let sidebar = document.querySelector('.sidebar')
+
+    btn.onclick = function (){
+        sidebar.classList.toggle('active');
+    };
+</script>
+
 
 </html>

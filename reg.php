@@ -10,7 +10,7 @@ if(isset($_POST['submit'])) {
     $phone = $_POST['phone'];
     $address = $_POST['address'];
 
-    $sql = "INSERT INTO participant (pid, nric, fullname, email, phone, address) VALUES (NULL, '$nric', '$fullname', '$email', '$phone', '$address')";
+    $sql = "INSERT INTO participant (pid, fullname, nric, email, phone, address )VALUES (NULL, '$fullname', '$nric', '$email', '$phone', '$address')";
 
     //echo "Stuck Here! UP";
     if (mysqli_query($conn, $sql)) {
@@ -24,3 +24,4 @@ if(isset($_POST['submit'])) {
     mysqli_close($conn);
 }
 ?>
+

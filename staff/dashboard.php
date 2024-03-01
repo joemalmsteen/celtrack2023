@@ -4,7 +4,7 @@ include("../dbconn.php");
 
 $sid = $_GET['sid'];
 
-$sql = "SELECT * FROM staff WHERE sid='$sid'";
+$sql = "SELECT * FROM admin WHERE sid='$sid'";
 
 $result = mysqli_query($conn, $sql);
 $row = mysqli_fetch_array($result);
@@ -29,11 +29,58 @@ if ($resultProg = mysqli_query($conn, $sqlProg)) {
 }
 
 //by month
-$sqlProgM = "SELECT MONTH(date) as month FROM program WHERE month = 12 ";
+$sqlProgM = "SELECT COUNT(*) as countPrograms FROM program WHERE MONTH(start_date) = MONTH(CURRENT_DATE())";
+
 if ($resultProgM = mysqli_query($conn, $sqlProgM)) {
-    // Return the number of rows in result set
-    $countProgM = mysqli_num_rows($resultProgM);
+    // Check if the query returned any rows
+    if (mysqli_num_rows($resultProgM) > 0) {
+        $rowProgM = mysqli_fetch_assoc($resultProgM);
+        // Assign the count value to $countProgM
+        $countProgM = $rowProgM['countPrograms'];
+    } else {
+        // If there are no rows returned by the query
+        $countProgM = 0; // Set default value to 0 or handle appropriately and $countProgM will have a value, even if it's 0
+    }
+} else {
+    // If there's an error in the SQL query
+    $countProgM = 0; // Set default value to 0 or handle appropriately
 }
+
+$currentYear = date("Y"); // Get the current year
+
+$sqlProgYear = "SELECT COUNT(*) as countPrograms FROM program WHERE YEAR(start_date) = $currentYear";
+
+if ($resultProgYear = mysqli_query($conn, $sqlProgYear)) {
+    // Check if the query returned any rows
+    if (mysqli_num_rows($resultProgYear) > 0) {
+        $rowProgYear = mysqli_fetch_assoc($resultProgYear);
+        // Assign the count value to $countProgYear
+        $countProgYear = $rowProgYear['countPrograms'];
+    } else {
+        // If there are no rows returned by the query
+        $countProgYear = 0; // Set default value to 0 or handle appropriately
+    }
+} else {
+    // If there's an error in the SQL query
+    $countProgYear = 0; // Set default value to 0 or handle appropriately
+    echo "Error executing the query: " . mysqli_error($conn);
+}
+
+
+// Fetch programs to categorise them into the tabs by datetime
+$currentDateTime = date('Y-m-d H:i:s');
+$sqlPast = "SELECT * FROM program 
+            WHERE end_date < '$currentDateTime'";
+$sqlOngoing = "SELECT * FROM program 
+            WHERE start_date <= '$currentDateTime' AND end_date >= '$currentDateTime'";
+$sqlUpcoming = "SELECT * FROM program 
+            WHERE start_date > '$currentDateTime'";
+
+$resultPast = mysqli_query($conn, $sqlPast);
+$resultOngoing = mysqli_query($conn, $sqlOngoing);
+$resultUpcoming = mysqli_query($conn, $sqlUpcoming);
+
+
 
 ?>
 <!doctype html>
@@ -50,128 +97,160 @@ if ($resultProgM = mysqli_query($conn, $sqlProgM)) {
 
     <!-- Custom styles for this template -->
     <link href="styles/dashboard.css" rel="stylesheet">
-    <title>CLUMS::Staff</title>
+
+    <title>Dashboard</title>
 </head>
 
 <body>
-    <nav class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow navbar-expand-lg">
-        <a class="navbar-brand col-md-3 col-lg-2 mr-0 px-3" href="#">Community Linkages Unit</a>
-        <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-toggle="collapse" data-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-        <!-- <input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"> -->
-        <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown">
-                <!-- <a class="nav-link" href="#"><i class="bi bi-person-circle"></i>Sign out</a> -->
-                <a class="nav-link dropdown-toggle" href="#" role="button" data-toggle="dropdown" aria-expanded="false">
-                    <i class="bi bi-person-circle"></i>
+    
+    <div class="sidebar d-flex flex-column justify-content-between">
+        <div class="top"> 
+            <div class="logo">
+                <span>Community Linkages</span>
+            </div>
+            <i class="bi bi-list" id="btn"></i>
+        </div>
+        <div class="user">
+            <img class="icon mb-2" src="icon.png" alt="">
+            <div>
+                <p class="bold h4">WELCOME, </p>
+                <p><?php echo $row['fullname']; ?></p>
+            </div>
+        </div>
+        <ul>
+            <li>
+                <a href="dashboard.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-front"></i>
+                    <span class="nav-item h6">Dashboard</span>
                 </a>
-                <div class="dropdown-menu dropdown-menu-right">
-                    <a class="dropdown-item" href="#">Profile</a>
-                    <a class="dropdown-item" href="#">Add User</a>
-                    <div class="dropdown-divider"></div>
-                    <a class="dropdown-item text-danger" href="#">Sign Out</a>
-                </div>
+            </li>
+            <li>
+                <a href="program.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-list-check"></i>
+                    <span class="nav-item h6">List Of Program</span>
+                </a>
+            </li>
+            <li>
+                <a href="status.php?sid=<?php echo $sid; ?>" class="stretched-link text-black disabled">
+                    <i class="bi bi-chat-left-text"></i>
+                    <span class="nav-item h6">Participant's post</span>
+                </a>
             </li>
         </ul>
-    </nav>
-
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="sidebar-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" href="javascript:window.location.reload(true)">
-                                <span data-feather="home"></span> Dashboard <span class="sr-only">(current)</span>
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="program.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="database"></span> Program List
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="status.php?sid=<?php echo $row['sid']; ?>">
-                                <span data-feather="framer"></span> Participant's Status
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link disabled" href="#">
-                                <span data-feather="save"></span> Miscellaneous
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
-
-            <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-md-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">Dashboard</h1>
-                </div>
-
-                <!-- cards to show some info -->
-                <div class="col-md-10 mx-auto pt-4">
-                    <div class="card-deck">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">TOTAL PROGRAMS</h5>
-                                <h1 class="card-text"><?php printf($countProg); ?></h1>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">PROGRAMS THIS MONTH (<?php echo date("F"); ?>)</h5>
-                                <h1 class="card-text">0</h1>
-                            </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">PROGRAMS THIS YEAR (<?php echo date("Y"); ?>)</h5>
-                                <h1 class="card-text">1</h1>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card-deck pt-4 pb-4">
-                        <div class="card">
-                            <div class="card-body">
-                                <h5 class="card-title">TOTAL PARTICIPANTS</h5>
-                                <p class="card-text"><small class="text-muted">Total number of participants that joined CLU programs</small></p>
-                                <h1 class="card-text"><?php printf($countPart); ?></h1>
-                            </div>
-                        </div>
-                        <div class="card pb-4">
-                            <div class="card-body">
-                                <h5 class="card-title">STATUS POSTED</h5>
-                                <p class="card-text"><small class="text-muted">Total number of participants that post their status.</small></p>
-                                <h1 class="card-text"><?php printf($countStat); ?></h1>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="card mb-4">
-                        <ul class="nav nav-tabs nav-justified" id="myTab" role="tablist">
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link flex-sm-fill text-sm-center active" id="home-tab" data-toggle="tab" data-target="#home" type="button" role="tab" aria-controls="home" aria-selected="true">Past Programs</a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link flex-sm-fill text-sm-center" id="ongoing-tab" data-toggle="tab" data-target="#onging" type="button" role="tab" aria-controls="home" aria-selected="true">Ongoing Program(s)</a>
-                            </li>
-                            <li class="nav-item" role="presentation">
-                                <a class="nav-link flex-sm-fill text-sm-center" id="profile-tab" data-toggle="tab" data-target="#profile" type="button" role="tab" aria-controls="profile" aria-selected="false">Upcoming Programs</a>
-                            </li>
-                        </ul>
-                        <div class="tab-content" id="myTabContent">
-                            <div class="tab-pane fade show active p-4" id="home" role="tabpanel" aria-labelledby="home-tab">
-                                <p>Program ICT Warriors Komuniti Belia Sri Aman</p>
-                            </div>
-                            <div class="tab-pane fade p-4" id="ongoing" role="tabpanel" aria-labelledby="ongoing-tab">...</div>
-                            <div class="tab-pane fade p-4" id="profile" role="tabpanel" aria-labelledby="profile-tab">...</div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-        </div>
+        <ul class="mt-auto">
+        <li>
+            <a href="logout.php" style="color: red;">
+                <i class="bi bi-box-arrow-in-right"></i>
+                <span class="nav-item">Log Out</span>
+            </a>
+        </li>
+    </ul>
     </div>
+
+    
+    <div class="main-content">
+        <div class="container-fluid d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-0 pb-2 mb-3 border-bottom">
+            <h1>DASHBOARD</h1>
+        </div>
+        <main role="main" class="col-md-9 ml-sm-auto col-lg-11 px-md-4">
+            <div class="container-fluid">
+                <!-- cards to show some info -->
+                <div class="row">
+                    <div class="col-md-10">
+                        <div class="card-deck">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">TOTAL PROGRAMS</h5>
+                                    <h1 class="card-text"><?php printf($countProg); ?></h1>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">PROGRAMS THIS MONTH (<?php echo date("F"); ?>)</h5>
+                                    <h1 class="card-text"><?php printf($countProgM); ?></h1>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">PROGRAMS THIS YEAR (<?php echo date("Y"); ?>)</h5>
+                                    <h1 class="card-text"><?php printf($countProgYear); ?></h1>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-deck pt-4 pb-4">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">TOTAL PARTICIPANTS</h5>
+                                    <p class="card-text"><small class="text-muted">Total number of participants that joined CLU programs</small></p>
+                                    <h1 class="card-text"><?php printf($countPart); ?></h1>
+                                </div>
+                            </div>
+                            <div class="card pb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">POSTING</h5>
+                                    <p class="card-text"><small class="text-muted">Number of posting that posted by participant.</small></p>
+                                    <h1 class="card-text"><?php printf($countStat); ?></h1>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card mb-4">
+                            <ul class="nav nav-tabs nav-justified" id="myTab" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link flex-sm-fill text-sm-center active" id="past-tab" data-toggle="tab" data-target="#past" type="button" role="tab" aria-controls="home" aria-selected="true">Past Programs</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link flex-sm-fill text-sm-center" id="ongoing-tab" data-toggle="tab" data-target="#ongoing" type="button" role="tab" aria-controls="home" aria-selected="true">Ongoing Program(s)</a>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <a class="nav-link flex-sm-fill text-sm-center" id="upcoming-tab" data-toggle="tab" data-target="#upcoming" type="button" role="tab" aria-controls="profile" aria-selected="false">Upcoming Programs</a>
+                                </li>
+                            </ul>
+                            <div class="tab-content" id="myTabContent">
+                                <div class="tab-pane fade show active p-4" id="past" role="tabpanel" aria-labelledby="past-tab">
+                                    <p>
+                                        <?php
+                                            while ($rowProgram = mysqli_fetch_assoc($resultPast)) {
+                                                echo "<td>{$rowProgram['progName']}</td>";
+                                                echo "<br>";
+                                            }
+                                        ?> 
+                                    </p>
+                                </div>
+                                <div class="tab-pane fade show  p-4" id="ongoing" role="tabpanel" aria-labelledby="ongoing-tab">
+                                    <p>
+                                        <?php
+                                            while ($rowProgram = mysqli_fetch_assoc($resultOngoing)) {
+                                                echo "<td>{$rowProgram['progName']}</td>";
+                                                echo "<br>";
+                                            }
+                                        ?> 
+                                    </p>
+
+                                </div>
+                                <div class="tab-pane fade  p-4" id="upcoming" role="tabpanel" aria-labelledby="upcoming-tab">
+                                <p>
+                                        <?php
+                                            while ($rowProgram = mysqli_fetch_assoc($resultUpcoming)) {
+                                                echo "<td>{$rowProgram['progName']}</td>";
+                                                echo "<br>";
+                                            }
+                                        ?> 
+                                    </p>
+                                </div>
+                            </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    
+
+
+
+
+
+
 
     <!-- jQuery and Bootstrap Bundle (includes Popper) -->
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.5.1/dist/jquery.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
@@ -181,5 +260,16 @@ if ($resultProgM = mysqli_query($conn, $sqlProgM)) {
     <script src="https://cdn.jsdelivr.net/npm/chart.js@2.9.4/dist/Chart.min.js"></script>
     <script src="script/dashboard.js"></script>
 </body>
+
+
+<!--FOR SIDEBAR-->
+<script>
+    let btn= document.querySelector('#btn')
+    let sidebar = document.querySelector('.sidebar')
+
+    btn.onclick = function (){
+        sidebar.classList.toggle('active');
+    };
+</script>
 
 </html>
